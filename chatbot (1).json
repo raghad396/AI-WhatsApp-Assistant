@@ -1,0 +1,916 @@
+{
+  "name": "chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "WhatsApp",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1136,
+        -176
+      ],
+      "id": "1a58d1d2-502e-4d09-8b40-31d7c37ad769",
+      "name": "Webhook",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=### الدور والشخصية:\nأنت لمساعد الذكي لخدمة العملاء في \"منح من أجلك\".\nأسلوبك: ودود، محترم، مختصر، وتستخدم الإيموجي بشكل لطيف (😊، 🎓، ✅).\nمهمتك: الرد على استفسارات الطالب ومساعدته في اتخاذ قرار التقديم، بناءً *حصرياً* على البيانات المتوفرة لديك أدناه.\n\n---\n\n### 1. من هو الطالب؟ (Context):\n- الاسم: {{ $('get the customers').item.json['الاسم كاملا'] }}\n- الشهادة الحالية: {{ $('get the customers').item.json['ما الشهادات الاكاديمية التي لديك'] }}\n- الدولة: {{ $('get the customers').item.json['ما جنسيتك'] }}\n- اذا ما لديه شهادة لغة: {{ $('get the customers').item.json['هل لديك شهادة لغة انجليزية؟ او هل كانت دراستك السابقة باللغة الانجليزية؟'] }}\n- هل وافق على الدفع: {{ $('get the customers').item.json['التقديم على المنحة عن طريقنا يكلفك 10 دولار هل توافق على الدفع؟'] }}\n\n### 2. سياق الحديث السابق:\nنحن تواصلنا معه سابقاً وأرسلنا له هذه الرسالة (افهم منها ما هي المنح التي اقترحناها عليه):\n\"{{ $('get the customers').item.json.message }}\"\n\n---\n\n### 3. قاعدة المعرفة (المصدر الوحيد للحقيقة):\nهذه قائمة بجميع تفاصيل المنح المتوفرة لدينا حالياً. ابحث عن الإجابة هنا فقط:\n\n[\n  المنحة: {{ $json.name }}\n  التخصصات/البرامج: {{ $json.property_programms }}\n  اللغة المطلوبة: {{ $json.property_language }}\n  تاريخ الانتهاء: {{ $json.property_date }}\n]\n\n---\n\n### ⛔ قوانين صارمة جداً (Do's and Don'ts):\n\n1. **قاعدة \"عدم التأليف\":**\n   - إذا سألك الطالب عن تفاصيل دقيقة (مثل: هل يوجد راتب شهري؟ هل السكن مجاني؟ كم تكلفة المعيشة؟) وهذه المعلومة **غير مكتوبة صراحة** في \"قاعدة المعرفة\" أعلاه، **توقف فوراً**.\n   - لا تخمن ولا تأتِ بمعلومات عامة من الإنترنت.\n   - الرد الإلزامي في هذه الحالة: \"سؤال ممتاز! 👌 سأقوم بتحويل استفسارك للإدارة للتأكد من التفاصيل الدقيقة والرد عليك قريباً.\"\n\n2. **التركيز:**\n   - إذا سأل \"ما هي المنح؟\"، أعد تذكيره بالمنح المذكورة في \"سياق الحديث السابق\" أولاً، ثم اذكر باقي المنح إذا طلب.\n\n3. **التنسيق:**\n   - رسائلك للواتساب، اجعلها قصيرة ومقسمة لفقرات.\n   - لا تستخدم علامة النجمة (*) للقوائم، استخدم الشرطة (-) لضمان تنسيق جيد.\n\n4. **الهدف البيعي:**\n   - إذا كان الطالب متردداً، شجعه بلطف على التقديم لأن الفرص محدودة، وذكره أننا نساعده في كل الخطوات مثل كتابة الحافز واختيار الجامعات المناسبة.\n\n---\n\n### كيفية الرد الآن:\n بناءً على رسالة الطالب القادمة، قدم له الإجابة من البيانات أعلاه فقط واذا سأل عن تفاصيل خارج هذا النطاق.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        64,
+        -80
+      ],
+      "id": "fffe50cf-5f39-41c0-8654-24ea883d24cf",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        64,
+        112
+      ],
+      "id": "51e3cd02-6d2d-4c57-9573-a534391b4b70",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "M2doJboCUh5gMZU5",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.payload.from }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        80
+      ],
+      "id": "4157ae69-dd27-45ae-96f4-b97aaddc130b",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8e718014-4710-4f89-a256-c668e901002a",
+              "leftValue": "={{ $json.body.payload.fromMe }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -960,
+        -176
+      ],
+      "id": "0417de10-1734-4c44-891b-e26b703b1e27",
+      "name": "if it from me"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1e84612-ef60-4e31-a919-72e61f766c71",
+              "leftValue": "={{ $json.body.payload.body }}",
+              "rightValue": "#stop",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            },
+            {
+              "id": "c78786e2-f858-4db8-8b66-e42a6e03b367",
+              "leftValue": "={{ $json.body.payload.fromMe }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -784,
+        -384
+      ],
+      "id": "86780b23-fe0a-4f15-85d8-388ffe5debda",
+      "name": "is it stop?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4da08a8a-1e20-4d79-b16a-26fd3e089a6a",
+              "leftValue": "={{ $json.body.payload.body }}",
+              "rightValue": "#start",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -672,
+        -224
+      ],
+      "id": "ababc229-e9fc-4ad4-9fbf-1afe8047c4ed",
+      "name": "is it start?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c7189294-74f5-4ec6-bfb7-5b3b63e2ecde",
+              "name": "=target_phone",
+              "value": "={{ $json.body.payload.body.split(' ')[1] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -544,
+        -400
+      ],
+      "id": "e868c87d-f3e7-4378-8b46-ed677241c27a",
+      "name": "phone num"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOU_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "منح من اجلك (الردود)",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1093471437,
+          "mode": "list",
+          "cachedResultName": "ردود النموذج 1",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "رقم الواتس اب الخاص بك مع المفتاح الدولي ( مثلا  اليمن +967)": "={{ $('phone num').item.json.target_phone }}",
+            "bot_status": "stopped",
+            "row_number": 0
+          },
+          "matchingColumns": [
+            "رقم الواتس اب الخاص بك مع المفتاح الدولي ( مثلا  اليمن +967)"
+          ],
+          "schema": [
+            {
+              "id": "طابع زمني",
+              "displayName": "طابع زمني",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "الاسم كاملا",
+              "displayName": "الاسم كاملا",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "رقم الواتس اب الخاص بك مع المفتاح الدولي ( مثلا  اليمن +967)",
+              "displayName": "رقم الواتس اب الخاص بك مع المفتاح الدولي ( مثلا  اليمن +967)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ما جنسيتك",
+              "displayName": "ما جنسيتك",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "العمر؟ (تاريخ الولادة بالميلادي)",
+              "displayName": "العمر؟ (تاريخ الولادة بالميلادي)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ما الشهادات الاكاديمية التي لديك",
+              "displayName": "ما الشهادات الاكاديمية التي لديك",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "على اي درجة جامعية تود التقديم",
+              "displayName": "على اي درجة جامعية تود التقديم",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "هل لديك شهادة لغة انجليزية؟ او هل كانت دراستك السابقة باللغة الانجليزية؟",
+              "displayName": "هل لديك شهادة لغة انجليزية؟ او هل كانت دراستك السابقة باللغة الانجليزية؟",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "التقديم على المنحة عن طريقنا يكلفك 10 دولار هل توافق على الدفع؟",
+              "displayName": "التقديم على المنحة عن طريقنا يكلفك 10 دولار هل توافق على الدفع؟",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "اختر طريقة الدفع المناسبة لك",
+              "displayName": "اختر طريقة الدفع المناسبة لك",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "bot_status",
+              "displayName": "bot_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false,
+          "options": {}
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -352,
+        -400
+      ],
+      "id": "a2b56c9c-db04-4e0d-bde7-65f668f98df4",
+      "name": "turn it off",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sfF49iymSO5Iop1w",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c7189294-74f5-4ec6-bfb7-5b3b63e2ecde",
+              "name": "=target_phone",
+              "value": "={{ $json.body.payload.body.split(' ')[1] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -384,
+        -240
+      ],
+      "id": "acad47b7-c889-447f-a886-3098e8cd1e05",
+      "name": "phone num2"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOU_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "منح من اجلك (الردود)",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1093471437,
+          "mode": "list",
+          "cachedResultName": "ردود النموذج 1",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "رقم الواتس اب الخاص بك مع المفتاح الدولي ( مثلا  اليمن +967)": "={{ $('phone num2').item.json.target_phone }}",
+            "row_number": 0
+          },
+          "matchingColumns": [
+            "رقم الواتس اب الخاص بك مع المفتاح الدولي ( مثلا  اليمن +967)"
+          ],
+          "schema": [
+            {
+              "id": "طابع زمني",
+              "displayName": "طابع زمني",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "الاسم كاملا",
+              "displayName": "الاسم كاملا",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "رقم الواتس اب الخاص بك مع المفتاح الدولي ( مثلا  اليمن +967)",
+              "displayName": "رقم الواتس اب الخاص بك مع المفتاح الدولي ( مثلا  اليمن +967)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ما جنسيتك",
+              "displayName": "ما جنسيتك",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "العمر؟ (تاريخ الولادة بالميلادي)",
+              "displayName": "العمر؟ (تاريخ الولادة بالميلادي)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ما الشهادات الاكاديمية التي لديك",
+              "displayName": "ما الشهادات الاكاديمية التي لديك",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "على اي درجة جامعية تود التقديم",
+              "displayName": "على اي درجة جامعية تود التقديم",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "هل لديك شهادة لغة انجليزية؟ او هل كانت دراستك السابقة باللغة الانجليزية؟",
+              "displayName": "هل لديك شهادة لغة انجليزية؟ او هل كانت دراستك السابقة باللغة الانجليزية؟",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "التقديم على المنحة عن طريقنا يكلفك 10 دولار هل توافق على الدفع؟",
+              "displayName": "التقديم على المنحة عن طريقنا يكلفك 10 دولار هل توافق على الدفع؟",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "اختر طريقة الدفع المناسبة لك",
+              "displayName": "اختر طريقة الدفع المناسبة لك",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "bot_status",
+              "displayName": "bot_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false,
+          "options": {}
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -192,
+        -256
+      ],
+      "id": "99bf0057-c515-4f9c-beb6-65e6ef6e7059",
+      "name": "turn it on",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sfF49iymSO5Iop1w",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOU_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "منح من اجلك (الردود)",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1093471437,
+          "mode": "list",
+          "cachedResultName": "ردود النموذج 1",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "رقم الواتس اب الخاص بك مع المفتاح الدولي ( مثلا  اليمن +967)",
+              "lookupValue": "={{ $json.body.payload.from.replace('@c.us', '') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -768,
+        -48
+      ],
+      "id": "2981c899-f2ed-464a-a516-df83d2c35446",
+      "name": "get the customers",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sfF49iymSO5Iop1w",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bf0dd033-ff98-45e9-8f06-cd339c15b373",
+              "leftValue": "={{ $json.bot_status }}",
+              "rightValue": "stopped",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -576,
+        -48
+      ],
+      "id": "30e06b5a-fed5-4633-a145-f909a038c656",
+      "name": "is the ai stopped"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "YOUR_NOTION_DATABASE_ID",
+          "mode": "list",
+          "cachedResultName": "SCHOLARSHIPS",
+          "cachedResultUrl": "https://www.notion.so/"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -368,
+        0
+      ],
+      "id": "568c22c8-13fd-4379-88c1-586ee4170d5d",
+      "name": "Get many database pages",
+      "credentials": {
+        "notionApi": {
+          "id": "Yu0f0ArfYZZY972h",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "name"
+            },
+            {
+              "fieldToAggregate": "property_language"
+            },
+            {
+              "fieldToAggregate": "property_programms"
+            },
+            {
+              "fieldToAggregate": "property_date.start",
+              "renameField": true,
+              "outputFieldName": "property_date"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        0
+      ],
+      "id": "0eed7da4-c5b1-4138-92ed-69df89e8f22a",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3000/api/sendText",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "YOUR_WAHA_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"chatId\": $('Webhook').item.json.body.payload.from,\n  \"text\": $json.output,\n  \"session\": \"default\"\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        464,
+        -80
+      ],
+      "id": "3fbf49e7-6fd0-480a-8172-95f3701fd19f",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "if it from me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if it from me": {
+      "main": [
+        [
+          {
+            "node": "is it stop?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "get the customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "is it stop?": {
+      "main": [
+        [
+          {
+            "node": "phone num",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "is it start?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "is it start?": {
+      "main": [
+        [
+          {
+            "node": "phone num2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "phone num": {
+      "main": [
+        [
+          {
+            "node": "turn it off",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "phone num2": {
+      "main": [
+        [
+          {
+            "node": "turn it on",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get the customers": {
+      "main": [
+        [
+          {
+            "node": "is the ai stopped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "is the ai stopped": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get many database pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many database pages": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "54d36dcf-cfcd-46a2-975c-b41f226257e3",
+  "meta": {
+    "instanceId": "cac0b53abc12bde23f4ac9b6d3f2db118b0c108d3f29687a8190beefcd9164fc"
+  },
+  "id": "p91kyn8etPbL9Hkt",
+  "tags": []
+}
